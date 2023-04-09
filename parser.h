@@ -6,7 +6,14 @@
 
 class Parser {
 	public:
+		Parser(FILE *input_stream);
 		Command* parse(char *input);
+
+
+	private:
+		int lookahead;
+
+
 	
 };
 
