@@ -19,6 +19,11 @@ class Command {
     Command(std::string name, std::list<std::string> args, std::string input, RedirectionType input_rt, std::string output, RedirectionType output_rt);
     ~Command();
     
+    // void set_name(char *name);
+    // void set_input(char *input);
+    // void set_output(char *output);
+    // inline void set_input_rt(RedirectionType i_rt) { input_rt = i_rt; }
+    // inline void set_output_rt(RedirectionType o_rt) { output_rt = o_rt; }
     inline char* get_name() { return name; }
     inline char* get_input() { return input; }
     inline char* get_output() {return output; }

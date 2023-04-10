@@ -63,22 +63,49 @@ Command::~Command() {
   }
 }
 
-void Command::print() {
-  std::cout << "command: " << std::endl;
-  std::cout << name;
+// void Command::set_name(char *name) {
+//   this->name = new char(strlen(name) + 1);
+//   strcpy(this->name, name);
+// }
 
+// void Command::set_input(char *input) {
+//   this->input = new char(strlen(input) + 1);
+//   strcpy(this->input, input);
+// }
+
+// void Command::set_output(char *output) {
+//   this->output = new char(strlen(output) + 1);
+//   strcpy(this->output, output);
+// }
+
+void Command::print() {
+  std::cout << "------- Printing a Command -------" << std::endl;
+  std::cout << "Program Name : " << name << std::endl;
+
+  std::cout << "Arguments :";
   if (!args.empty()) {
     for (std::list<std::string>::iterator it = args.begin(); it != args.end(); it++) {
       std::cout << " " << *it;
     }
   }
-
-  if (input != nullptr) {
-    std::cout << " < " << input;
+  else {
+    std::cout << "No Arguments";
   }
 
+  std::cout << std::endl << "Input : ";
+  if (input != nullptr) {
+    std::cout << input;
+  }
+  else {
+    std::cout << "stdin\n";
+  }
+
+  std::cout << "Output : ";
   if (output != nullptr) {
     std::cout << ((output_rt == IO) ? " > " : " >> ") << output;
+  }
+  else {
+    std::cout << "stdout\n";
   }
 
   std::cout << std::endl;
