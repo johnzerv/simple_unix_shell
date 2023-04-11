@@ -68,17 +68,12 @@ void Parser::command() {
     std::string id(identifier());
     std::list<std::string> args = arguments();
     Redirection input_redirection = input_file();
-    Redirection output_redirection;
-    output_redirection.stream = nullptr;
-    output_redirection.type = NO_REDIRECTION;
+    Redirection output_redirection = output_file();
+    std::string input_r = (input_redirection.stream == nullptr) ? "" : input_redirection.stream;
+    std::string output_r = (output_redirection.stream == nullptr) ? "" : output_redirection.stream;
 
-    if (input_redirection.stream == nullptr) {
-        cmd = new Command(id, args);
-    }
-    else {
-        cmd = new Command(id, args, input_redirection.stream, input_redirection.type,
-                                    output_redirection.stream, output_redirection.type);
-    }
+    cmd = new Command(id, args, input_r, input_redirection.type,
+                                    output_r, output_redirection.type);
 }
 
 std::list<std::string> Parser::arguments() {
@@ -104,22 +99,44 @@ std::list<std::string> Parser::arguments() {
 
 Redirection Parser::input_file() {
     Redirection input_redirection;
-    input_redirection.stream = NULL;
+    input_redirection.stream = nullptr;
     input_redirection.type = NO_REDIRECTION;
 
-    if (lookahead == ' ' || lookahead == '\t') {
+    while (lookahead == ' ' || lookahead == '\t') {
         consume(lookahead);
     }
 
     if (lookahead == '<') {
+        consume('<');
         input_redirection.stream = identifier();
-        input_redirection.type = NO_REDIRECTION;
+        input_redirection.type = IO;
     }
 
-
-
     return input_redirection;
+}
 
+Redirection Parser::output_file() {
+    Redirection output_redirection;
+    output_redirection.stream = nullptr;
+    output_redirection.type = NO_REDIRECTION;
+
+    while (lookahead == ' ' || lookahead == '\t') {
+        consume(lookahead);
+    }
+
+    if (lookahead == '>') {
+        consume('>');
+        std::cout << "lookahead == " << lookahead << std::endl;
+        output_redirection.type = IO;
+
+        if (lookahead == '>') {
+            consume('>');
+            output_redirection.type = ADD;
+        }
+        output_redirection.stream = identifier();
+    }
+
+    return output_redirection;
 }
 
 char* Parser::identifier() {

@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
+#include <cassert>
 
 #include "command.h"
 
@@ -32,21 +33,28 @@ Command::Command(std::string name, std::list<std::string> args) {
 }
 
 Command::Command(std::string name, std::list<std::string> args, std::string input, RedirectionType input_rt, std::string output, RedirectionType output_rt) {
+  assert(!name.empty());
   this->name = new char(name.length() + 1);
-  this->input = new char(input.length() + 1);
-  this->output = new char(output.length() + 1);
+  strcpy(this->name, name.c_str());
 
-  if(this->name != nullptr && this->input != nullptr && this->output != nullptr) {
-    strcpy(this->name, name.c_str());
+  if (!input.empty()) {
+    this->input = new char(input.length() + 1);
     strcpy(this->input, input.c_str());
-    strcpy(this->output, output.c_str());
     this->input_rt = input_rt;
+  }
+  else {
+    this->input = nullptr;
+    this->input_rt = NO_REDIRECTION;
+  }
+
+  if (!output.empty()) {
+    this->output = new char(output.length() + 1);
+    strcpy(this->output, output.c_str());
     this->output_rt = output_rt;
   }
   else {
-    this->name = nullptr;
-    this->input = nullptr;
     this->output = nullptr;
+    this->output_rt = NO_REDIRECTION;
   }
 
   this->args = args;
@@ -97,15 +105,15 @@ void Command::print() {
     std::cout << input;
   }
   else {
-    std::cout << "stdin\n";
+    std::cout << "stdin";
   }
 
-  std::cout << "Output : ";
+  std::cout << "\nOutput : ";
   if (output != nullptr) {
-    std::cout << ((output_rt == IO) ? " > " : " >> ") << output;
+    std::cout << ((output_rt == IO) ? "> " : ">> ") << output;
   }
   else {
-    std::cout << "stdout\n";
+    std::cout << "stdout";
   }
 
   std::cout << std::endl;

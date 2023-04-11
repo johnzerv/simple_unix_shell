@@ -28,7 +28,7 @@ class Parser {
 		void command();
 		std::list<std::string> arguments();
 		Redirection input_file();
-		void output_file();
+		Redirection output_file();
 		void pipeline();
 
 		char *identifier();
