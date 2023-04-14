@@ -3,6 +3,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <fcntl.h>
 
 #include "common.h"
 #include "command.h"
@@ -54,18 +55,23 @@ int main(void) {
             args[no_args + 1] = nullptr;
 
             FILE *input_fp = nullptr, *output_fp = nullptr;
+            int input_fd = -1, output_fd = -1;
             char *input_stream = cmd->get_input(), *output_stream = cmd->get_output();
             if (input_stream != nullptr) {
-                input_fp = freopen(input_stream, "r", stdin);
+                input_fd = open(input_stream, O_RDONLY);
+                close(0);
+                dup2(input_fd, 0);
+                close(input_fd);
             }
-            
+
             if (output_stream != nullptr) {
-                if (cmd->get_output_rt() == IO) {
-                    output_fp = freopen(output_stream, "w", stdout);
-                }
-                else {
-                    output_fp = freopen(output_stream, "a", stdout);
-                }
+                int flags = (cmd->get_output_rt() == IO) ? O_RDWR | O_CREAT | O_TRUNC
+                                                      : O_RDWR | O_CREAT | O_APPEND;
+
+                output_fd = open(output_stream, flags, 0666);
+                close(1);
+                dup2(output_fd, 1);
+                close(output_fd);
             }
 
             execvp(args[0], (char * const *)args);
@@ -74,13 +80,6 @@ int main(void) {
                 delete args[i];
             }
             delete args;
-
-            if (input_fp != nullptr) {
-                fclose(input_fp);
-            }
-            if (output_fp != nullptr) {
-                fclose(output_fp);
-            }
         }
 
         // close(fd[WRITE]);
