@@ -30,8 +30,15 @@ int main(void) {
             exit(EXIT_FAILURE);
         }
 
+        // int fd[2];       // for pipeline
+        // if (pipe(fd) == -1) {
+        //     perror("pipe");
+        //     exit(EXIT_FAILURE);
+        // }
+
         if (pid == 0) { // Child-Process
             // Prepare arguments for execvp()
+            // Form : {<program_name>, arg1, arg2, ..., NULL}
             size_t no_args = cmd->get_args().size(); 
             char **args = new char*[no_args + 2];   // +2 for command name, and NULL
 
@@ -46,13 +53,37 @@ int main(void) {
             }
             args[no_args + 1] = nullptr;
 
+            FILE *input_fp = nullptr, *output_fp = nullptr;
+            char *input_stream = cmd->get_input(), *output_stream = cmd->get_output();
+            if (input_stream != nullptr) {
+                input_fp = freopen(input_stream, "r", stdin);
+            }
+            
+            if (output_stream != nullptr) {
+                if (cmd->get_output_rt() == IO) {
+                    output_fp = freopen(output_stream, "w", stdout);
+                }
+                else {
+                    output_fp = freopen(output_stream, "a", stdout);
+                }
+            }
+
             execvp(args[0], (char * const *)args);
 
             for (i = 0; i < no_args + 1; i++) {
                 delete args[i];
             }
             delete args;
+
+            if (input_fp != nullptr) {
+                fclose(input_fp);
+            }
+            if (output_fp != nullptr) {
+                fclose(output_fp);
+            }
         }
+
+        // close(fd[WRITE]);
         
         waitpid(pid, nullptr, WUNTRACED);
 

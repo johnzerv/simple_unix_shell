@@ -3,6 +3,9 @@
 
 #include <string>
 
+#define READ 0
+#define WRITE 1
+
 typedef enum {IO, ADD, NO_REDIRECTION} RedirectionType;
 
 typedef struct {
