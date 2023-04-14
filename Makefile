@@ -9,27 +9,27 @@ CC = g++
 # Objects
 OBJ_COMMAND = $(OBJ_DIR)/command.o
 OBJ_PARSER = $(OBJ_DIR)/parser.o
-OBJ_MAIN = $(OBJ_DIR)/main.o
-OBJS = $(OBJ_COMMAND) $(OBJ_PARSER) $(OBJ_MAIN)
+OBJ_MYSH = $(OBJ_DIR)/mysh.o
+OBJS = $(OBJ_COMMAND) $(OBJ_PARSER) $(OBJ_MYSH)
 
 # Executables
-EXEC_MAIN = main
+EXEC_MYSH = mysh
 
 # Define all targets
-all: target_main
+all: target_mysh
 
 # And each one individually
-target_main: $(EXEC_MAIN)
+target_mysh: $(EXEC_MYSH)
 
-$(EXEC_MAIN): $(OBJS)
-	@$(CC) $(CPPFLAGS) $(OBJS) -o $(EXEC_MAIN)
+$(EXEC_MYSH): $(OBJS)
+	@$(CC) $(CPPFLAGS) $(OBJS) -o $(EXEC_MYSH)
 
 .SILENT: $(OBJS) # Silence implicit rule output
 .PHONY: clean
 
 clean:
 	@echo "Cleaning up ..."
-	@rm -f $(OBJS) $(EXEC_MAIN)
+	@rm -f $(OBJS) $(EXEC_MYSH)
 
-run: $(EXEC_MAIN)
-	@./$(EXEC_MAIN)
+run: $(EXEC_MYSH)
+	./$(EXEC_MYSH)

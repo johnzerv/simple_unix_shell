@@ -29,6 +29,7 @@ class Command {
     inline char* get_output() {return output; }
     inline RedirectionType get_input_rt() { return input_rt; }
     inline RedirectionType get_output_rt() { return output_rt; }
+    inline std::list <std::string> get_args() { return args; }
 
     void print();
 };

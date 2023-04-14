@@ -1,0 +1,13 @@
+TODO List:
+
+Status : Parsing commands with arguments and redirections.
+
+a) write an auxiliary function called skip_whitespaces
+
+
+1) Write structure for executing the commands after parsing them (fork, dup2, exec).
+2) Feature to support pipes. (For each parser a list of commands)
+3) Background execution
+4) Signals
+5) Wild Characters
+6) Aliases

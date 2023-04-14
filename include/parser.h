@@ -15,15 +15,18 @@ class Parser {
 
 		inline void parse_command() { command(); }
 		inline Command* get_cmd() { return cmd; }	
+		inline bool exit_requested() { return exit_keyword_appeared; };
 
 	private:
 		Command *cmd;
 		char lookahead;
 		FILE *input_stream;
+		bool exit_keyword_appeared;
 
 		void consume(char symbol);
 		bool is_valid_symbol(char symbol);
-		bool is_end_of_identifier(char symbol);
+		bool is_invalid_symbol(char symbol);
+
 
 		void command();
 		std::list<std::string> arguments();

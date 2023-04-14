@@ -34,10 +34,14 @@
 Parser::Parser(FILE *input_stream) {
     this->input_stream = input_stream;
     lookahead = fgetc(input_stream);
+    exit_keyword_appeared = false;
+    cmd = nullptr;
 }
 
 Parser::~Parser() {
-    delete cmd;
+    if (cmd != nullptr) {
+        delete cmd;
+    }
 }
 
 void Parser::consume(char symbol) {
@@ -54,10 +58,11 @@ bool Parser::is_valid_symbol(char symbol) {
     return false;
 }
 
-bool Parser::is_end_of_identifier(char symbol) {
+bool Parser::is_invalid_symbol(char symbol) {
     if (symbol == ' ' || symbol == '\n' || symbol == '<'
      || symbol == '>' || symbol == '|' || symbol == '\t'
-     || symbol == '&' || symbol == ';') {
+     || symbol == '&' || symbol == ';' || symbol == ':'
+     || symbol ==   '/') {
         return true;
      }
 
@@ -65,6 +70,28 @@ bool Parser::is_end_of_identifier(char symbol) {
 }
 
 void Parser::command() {
+    // Skip new lines
+    while (lookahead == '\n') {
+        consume(lookahead);
+    }
+
+    // Check if exit has been requested
+    if (lookahead == 'e') {
+        consume('e');
+        if (lookahead == 'x') {
+            consume('x');
+            if (lookahead == 'i') {
+                consume('i');
+                if (lookahead == 't') {
+                    consume('t');
+                    exit_keyword_appeared = true;
+                    return;
+
+                } else ungetc(lookahead, input_stream);
+            } else ungetc(lookahead, input_stream);
+        } else ungetc(lookahead, input_stream);
+    }
+
     std::string id(identifier());
     std::list<std::string> args = arguments();
     Redirection input_redirection = input_file();
@@ -74,13 +101,13 @@ void Parser::command() {
 
     cmd = new Command(id, args, input_r, input_redirection.type,
                                     output_r, output_redirection.type);
+
 }
 
 std::list<std::string> Parser::arguments() {
     std::list<std::string> args = std::list<std::string>();
 
-    // Skip whitespaces
-    while (lookahead == ' ' || lookahead == '\t') {
+    while (lookahead == ' ' || lookahead == 't') {
         consume(lookahead);
     }
 
@@ -126,7 +153,6 @@ Redirection Parser::output_file() {
 
     if (lookahead == '>') {
         consume('>');
-        std::cout << "lookahead == " << lookahead << std::endl;
         output_redirection.type = IO;
 
         if (lookahead == '>') {
@@ -148,7 +174,7 @@ char* Parser::identifier() {
         consume(lookahead);
     }
 
-    while (!is_end_of_identifier(lookahead)) {
+    while (!is_invalid_symbol(lookahead)) {
         id[index++] = lookahead;
         consume(lookahead);
     }
