@@ -32,8 +32,8 @@ Command::Command(std::string name, std::list<std::string> args) {
   this->input = this->output = nullptr;
 }
 
-Command::Command(std::string name, std::list<std::string> args, std::string input, RedirectionType input_rt,
-                 std::string output, RedirectionType output_rt, bool in_pipeline) {
+Command::Command(std::string name, std::list<std::string> args, std::string input, InputOutputType input_rt,
+                 std::string output, InputOutputType output_rt, bool in_pipeline) {
   assert(!name.empty());
   this->name = new char(name.length() + 1);
   strcpy(this->name, name.c_str());
@@ -106,6 +106,9 @@ void Command::print() {
   if (input != nullptr) {
     std::cout << input;
   }
+  else if (input_rt == PIPELINE) {
+    std::cout << "pipe-read";
+  }
   else {
     std::cout << "stdin";
   }
@@ -113,6 +116,9 @@ void Command::print() {
   std::cout << "\nOutput : ";
   if (output != nullptr) {
     std::cout << ((output_rt == IO) ? "> " : ">> ") << output;
+  }
+  else if (output_rt == PIPELINE) {
+    std::cout << "pipe-write";
   }
   else {
     std::cout << "stdout";

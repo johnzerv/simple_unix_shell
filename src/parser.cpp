@@ -48,7 +48,7 @@ bool Parser::is_invalid_symbol(char symbol) {
     return false;
 }
 
-bool Parser::command(bool is_in_pipeline) {
+bool Parser::command(bool is_from_pipeline) {
     // Skip new lines
     while (lookahead == '\n') {
         consume(lookahead);
@@ -76,9 +76,22 @@ bool Parser::command(bool is_in_pipeline) {
     Redirection input_redirection = input_file();
     Redirection output_redirection = output_file();
     
-    // The input of a command in pipeline is the output of the pipe and only that
-    if (is_in_pipeline && input_redirection.stream != nullptr) {
-        return false;
+    // Pipeline info, TODO: need of better comments
+    if (is_from_pipeline) {
+        if (input_redirection.stream != nullptr) {
+            return false;
+        }
+    } else {
+        input_redirection.type = PIPELINE;
+    }
+
+    bool has_pipeline = pipeline();
+    if (has_pipeline) {
+        if ( output_redirection.stream != nullptr) {
+            return false;
+        }
+    } else {
+        output_redirection.type = PIPELINE;
     }
 
     // Convert char* to string for Command constructor
@@ -86,7 +99,7 @@ bool Parser::command(bool is_in_pipeline) {
     std::string output_r = (output_redirection.stream == nullptr) ? "" : output_redirection.stream;
 
     Command *cmd = new Command(id, args, input_r, input_redirection.type,
-                                    output_r, output_redirection.type, is_in_pipeline);
+                                    output_r, output_redirection.type, is_from_pipeline);
     commands.push_back(cmd);
 
     return true;
@@ -147,17 +160,19 @@ Redirection Parser::output_file() {
     return output_redirection;
 }
 
-void Parser::pipeline() {
+bool Parser::pipeline() {
     skip_whitespaces();
 
     if (lookahead != '|') {
-        return;
+        return false;
     }
 
     consume ('|');
     skip_whitespaces();
 
     command(true);
+
+    return true;
 }
 
 char* Parser::identifier() {

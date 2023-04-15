@@ -28,11 +28,11 @@ class Parser {
 		bool is_invalid_symbol(char symbol);
 
 
-		bool command(bool is_in_pipeline);
+		bool command(bool is_in_pipeline);	// Returns false if an error occured, else true
 		std::list<std::string> arguments();
 		Redirection input_file();
 		Redirection output_file();
-		void pipeline();
+		bool pipeline();	// Returns true if there is pipeline
 
 		char *identifier();
 
