@@ -40,7 +40,8 @@ int main(void) {
         if (pid == 0) { // Child-Process
             // Prepare arguments for execvp()
             // Form : {<program_name>, arg1, arg2, ..., NULL}
-            size_t no_args = cmd->get_args().size(); 
+            size_t no_args = cmd->get_args().size();
+            list<string> arguments = cmd->get_args();
             char **args = new char*[no_args + 2];   // +2 for command name, and NULL
 
             args[0] = new char[strlen(cmd->get_name() + 1)];
@@ -48,13 +49,12 @@ int main(void) {
 
             size_t i;
             list<string>::iterator it;
-            for (i = 1, it = cmd->get_args().begin(); i < no_args + 1 && it != cmd->get_args().end(); i++, it++) {
+            for (i = 1, it = arguments.begin(); i < no_args + 1 && it != arguments.end(); i++, it++) {
                 args[i] = new char[(*it).length() + 1];
                 strcpy(args[i], (*it).c_str());
             }
             args[no_args + 1] = nullptr;
-
-            FILE *input_fp = nullptr, *output_fp = nullptr;
+        
             int input_fd = -1, output_fd = -1;
             char *input_stream = cmd->get_input(), *output_stream = cmd->get_output();
             if (input_stream != nullptr) {
@@ -73,6 +73,7 @@ int main(void) {
                 dup2(output_fd, 1);
                 close(output_fd);
             }
+
 
             execvp(args[0], (char * const *)args);
 
