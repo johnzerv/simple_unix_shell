@@ -13,12 +13,12 @@ class Parser {
 		~Parser();
 		Command* parse(char *input);
 
-		inline void parse_command() { command(); }
-		inline Command* get_cmd() { return cmd; }	
+		inline bool parse_command() { return command(false); }
+		inline std::list<Command*> get_commands() { return commands; }	
 		inline bool exit_requested() { return exit_keyword_appeared; };
 
 	private:
-		Command *cmd;
+		std::list<Command*> commands;
 		char lookahead;
 		FILE *input_stream;
 		bool exit_keyword_appeared;
@@ -28,7 +28,7 @@ class Parser {
 		bool is_invalid_symbol(char symbol);
 
 
-		void command();
+		bool command(bool is_in_pipeline);
 		std::list<std::string> arguments();
 		Redirection input_file();
 		Redirection output_file();
@@ -36,6 +36,7 @@ class Parser {
 
 		char *identifier();
 
+		void skip_whitespaces();
 };
 
 #endif // PARSER_H

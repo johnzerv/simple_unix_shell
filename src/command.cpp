@@ -32,7 +32,8 @@ Command::Command(std::string name, std::list<std::string> args) {
   this->input = this->output = nullptr;
 }
 
-Command::Command(std::string name, std::list<std::string> args, std::string input, RedirectionType input_rt, std::string output, RedirectionType output_rt) {
+Command::Command(std::string name, std::list<std::string> args, std::string input, RedirectionType input_rt,
+                 std::string output, RedirectionType output_rt, bool in_pipeline) {
   assert(!name.empty());
   this->name = new char(name.length() + 1);
   strcpy(this->name, name.c_str());
@@ -58,6 +59,7 @@ Command::Command(std::string name, std::list<std::string> args, std::string inpu
   }
 
   this->args = args;
+  this->in_pipeline = in_pipeline;
 }
 
 Command::~Command() {

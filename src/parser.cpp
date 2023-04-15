@@ -7,40 +7,19 @@
 
 #include "parser.h"
 
-// Command* Parser::parse(char *command) {
-//     unsigned int length = strlen(command);
-//     assert(length >= 0);
-
-//     char program[100];
-//     int i;
-//     for (i = 0; i < length && command[i] != ' '; i++) {
-//         program[i] = command[i];
-//     }
-//     program[i] = '\0';
-
-//     while(command[i++] == ' ');   // skip whitepaces
-
-//     char output_str[100], input_str[100];
-//     RedirectionType output_rt = NO_REDIRECTION, input_rt = NO_REDIRECTION;
-
-//     // if (command[i] == '>') {
-//     //     output_rt = 
-//     //     if (command[i+1] == '>') {
-//     //         output_rt = ADD;
-//     //     }
-//     // }
-// }
-
 Parser::Parser(FILE *input_stream) {
     this->input_stream = input_stream;
     lookahead = fgetc(input_stream);
     exit_keyword_appeared = false;
-    cmd = nullptr;
 }
 
 Parser::~Parser() {
-    if (cmd != nullptr) {
-        delete cmd;
+    if (!commands.empty()) {
+        for (std::list<Command*>::iterator it = commands.begin(); it != commands.end(); it++) {
+            if ((*it) != nullptr) {
+                delete *it;
+            }
+        }
     }
 }
 
@@ -69,7 +48,7 @@ bool Parser::is_invalid_symbol(char symbol) {
     return false;
 }
 
-void Parser::command() {
+bool Parser::command(bool is_in_pipeline) {
     // Skip new lines
     while (lookahead == '\n') {
         consume(lookahead);
@@ -85,7 +64,7 @@ void Parser::command() {
                 if (lookahead == 't') {
                     consume('t');
                     exit_keyword_appeared = true;
-                    return;
+                    return true;
 
                 } else ungetc(lookahead, input_stream);
             } else ungetc(lookahead, input_stream);
@@ -96,20 +75,27 @@ void Parser::command() {
     std::list<std::string> args = arguments();
     Redirection input_redirection = input_file();
     Redirection output_redirection = output_file();
+    
+    // The input of a command in pipeline is the output of the pipe and only that
+    if (is_in_pipeline && input_redirection.stream != nullptr) {
+        return false;
+    }
+
+    // Convert char* to string for Command constructor
     std::string input_r = (input_redirection.stream == nullptr) ? "" : input_redirection.stream;
     std::string output_r = (output_redirection.stream == nullptr) ? "" : output_redirection.stream;
 
-    cmd = new Command(id, args, input_r, input_redirection.type,
-                                    output_r, output_redirection.type);
+    Command *cmd = new Command(id, args, input_r, input_redirection.type,
+                                    output_r, output_redirection.type, is_in_pipeline);
+    commands.push_back(cmd);
 
+    return true;
 }
 
 std::list<std::string> Parser::arguments() {
     std::list<std::string> args = std::list<std::string>();
 
-    while (lookahead == ' ' || lookahead == 't') {
-        consume(lookahead);
-    }
+    skip_whitespaces();
 
     if (is_valid_symbol(lookahead)) {
         std::string id(identifier());
@@ -129,9 +115,7 @@ Redirection Parser::input_file() {
     input_redirection.stream = nullptr;
     input_redirection.type = NO_REDIRECTION;
 
-    while (lookahead == ' ' || lookahead == '\t') {
-        consume(lookahead);
-    }
+    skip_whitespaces();
 
     if (lookahead == '<') {
         consume('<');
@@ -147,9 +131,7 @@ Redirection Parser::output_file() {
     output_redirection.stream = nullptr;
     output_redirection.type = NO_REDIRECTION;
 
-    while (lookahead == ' ' || lookahead == '\t') {
-        consume(lookahead);
-    }
+    skip_whitespaces();
 
     if (lookahead == '>') {
         consume('>');
@@ -165,14 +147,25 @@ Redirection Parser::output_file() {
     return output_redirection;
 }
 
+void Parser::pipeline() {
+    skip_whitespaces();
+
+    if (lookahead != '|') {
+        return;
+    }
+
+    consume ('|');
+    skip_whitespaces();
+
+    command(true);
+}
+
 char* Parser::identifier() {
     char *id = new char[100];
     unsigned int index = 0;
 
     // Skip whitespaces
-    while (lookahead == ' ' || lookahead == '\t') {
-        consume(lookahead);
-    }
+    skip_whitespaces();
 
     while (!is_invalid_symbol(lookahead)) {
         id[index++] = lookahead;
@@ -181,4 +174,10 @@ char* Parser::identifier() {
     id[index] = '\0';
 
     return id;
+}
+
+void Parser::skip_whitespaces() {
+    while (lookahead == ' ' || lookahead == '\t') {
+        consume(lookahead);
+    }
 }

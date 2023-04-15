@@ -9,6 +9,7 @@ class Command {
       char *name;
       char *input;
       char *output;
+      bool in_pipeline;
       RedirectionType input_rt;
       RedirectionType output_rt;
       std::list <std::string> args;
@@ -16,7 +17,8 @@ class Command {
   public:
     Command(std::string name);
     Command(std::string name, std::list<std::string> args);
-    Command(std::string name, std::list<std::string> args, std::string input, RedirectionType input_rt, std::string output, RedirectionType output_rt);
+    Command(std::string name, std::list<std::string> args, std::string input, RedirectionType input_rt,
+            std::string output, RedirectionType output_rt, bool in_pipeline);
     ~Command();
     
     // void set_name(char *name);
