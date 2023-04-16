@@ -33,7 +33,7 @@ Command::Command(std::string name, std::list<std::string> args) {
 }
 
 Command::Command(std::string name, std::list<std::string> args, std::string input, InputOutputType input_rt,
-                 std::string output, InputOutputType output_rt) {
+                 std::string output, InputOutputType output_rt, bool in_background) {
   assert(!name.empty());
   this->name = new char(name.length() + 1);
   strcpy(this->name, name.c_str());
@@ -67,6 +67,7 @@ Command::Command(std::string name, std::list<std::string> args, std::string inpu
   }
 
   this->args = args;
+  this->in_background = in_background;
 }
 
 Command::~Command() {

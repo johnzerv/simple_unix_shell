@@ -36,6 +36,7 @@ class Parser {
 		RedirectionPacket input_file();
 		RedirectionPacket output_file();
 		bool pipeline();	// Returns true if there is pipeline
+		bool background();	// Returns true if a command must be executed in background
 
 		char *identifier();
 

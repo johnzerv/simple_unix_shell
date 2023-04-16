@@ -97,8 +97,10 @@ bool Parser::command(bool is_from_pipeline) {
     std::string input_str = (input_redirection.stream == nullptr) ? "" : input_redirection.stream;
     std::string output_str = (output_redirection.stream == nullptr) ? "" : output_redirection.stream;
 
+    bool in_background = background();
+
     Command *cmd = new Command(id, args, input_str, input_redirection.type,
-                                    output_str, output_redirection.type);
+                                    output_str, output_redirection.type, in_background);
     commands.push_front(cmd);
 
     return true;
@@ -172,6 +174,16 @@ bool Parser::pipeline() {
     command(true);
 
     return true;
+}
+
+bool Parser::background() {
+    skip_whitespaces();
+
+    if (lookahead != '&') {
+        return true;
+    }
+
+    return false;
 }
 
 char* Parser::identifier() {

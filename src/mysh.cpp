@@ -149,7 +149,9 @@ int main(void) {
                 delete args;
             }
 
-            children_to_wait.push_back(pid);
+            if (!(*cmd_it)->is_in_background()) {
+                children_to_wait.push_back(pid);
+            }
 
             // We have to close old pipe's ends after the connection
             if ((no_cmd % 2 == 1 || no_cmd + 1 == commands.size()) && commands.size() > 1) {    
