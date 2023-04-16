@@ -11,6 +11,6 @@ typedef enum {IO, ADD, PIPELINE, NO_REDIRECTION} InputOutputType;
 typedef struct {
     char *stream;
     InputOutputType type;
-} Redirection;
+} RedirectionPacket;
 
 #endif // COMMON_H

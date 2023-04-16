@@ -72,8 +72,8 @@ bool Parser::command(bool is_from_pipeline) {
 
     std::string id(identifier());
     std::list<std::string> args = arguments();
-    Redirection input_redirection = input_file();
-    Redirection output_redirection = output_file();
+    RedirectionPacket input_redirection = input_file();
+    RedirectionPacket output_redirection = output_file();
     
     // Pipeline info, TODO: need of better comments
     if (is_from_pipeline) {
@@ -98,7 +98,7 @@ bool Parser::command(bool is_from_pipeline) {
     std::string output_str = (output_redirection.stream == nullptr) ? "" : output_redirection.stream;
 
     Command *cmd = new Command(id, args, input_str, input_redirection.type,
-                                    output_str, output_redirection.type, is_from_pipeline);
+                                    output_str, output_redirection.type);
     commands.push_front(cmd);
 
     return true;
@@ -122,8 +122,8 @@ std::list<std::string> Parser::arguments() {
     return args;
 }
 
-Redirection Parser::input_file() {
-    Redirection input_redirection;
+RedirectionPacket Parser::input_file() {
+    RedirectionPacket input_redirection;
     input_redirection.stream = nullptr;
     input_redirection.type = NO_REDIRECTION;
 
@@ -138,8 +138,8 @@ Redirection Parser::input_file() {
     return input_redirection;
 }
 
-Redirection Parser::output_file() {
-    Redirection output_redirection;
+RedirectionPacket Parser::output_file() {
+    RedirectionPacket output_redirection;
     output_redirection.stream = nullptr;
     output_redirection.type = NO_REDIRECTION;
 
