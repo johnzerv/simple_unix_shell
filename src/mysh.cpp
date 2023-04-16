@@ -28,7 +28,8 @@ int main(void) {
             break;
         }
 
-        list<Command *>commands = my_parser->get_commands();
+
+        list<Command *> commands = my_parser->get_commands();
 
         pid_t pid;
         if ((pid = fork()) == -1) {
@@ -86,7 +87,10 @@ int main(void) {
                 }
 
 
-                execvp(args[0], (char * const *)args);
+                if (execvp(args[0], (char * const *)args) < 0) {
+                    perror("execvp");
+                    exit(EXIT_FAILURE);
+                }
 
                 for (i = 0; i < no_args + 1; i++) {
                     delete args[i];

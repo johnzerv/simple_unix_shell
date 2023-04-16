@@ -43,6 +43,10 @@ Command::Command(std::string name, std::list<std::string> args, std::string inpu
     strcpy(this->input, input.c_str());
     this->input_rt = input_rt;
   }
+  else if (input_rt == PIPELINE) {
+    this->input = nullptr;
+    this->input_rt = PIPELINE;
+  }
   else {
     this->input = nullptr;
     this->input_rt = NO_REDIRECTION;
@@ -52,6 +56,10 @@ Command::Command(std::string name, std::list<std::string> args, std::string inpu
     this->output = new char(output.length() + 1);
     strcpy(this->output, output.c_str());
     this->output_rt = output_rt;
+  }
+  else if (output_rt == PIPELINE) {
+    this->output = nullptr;
+    this->output_rt = PIPELINE;
   }
   else {
     this->output = nullptr;

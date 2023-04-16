@@ -40,8 +40,7 @@ bool Parser::is_valid_symbol(char symbol) {
 bool Parser::is_invalid_symbol(char symbol) {
     if (symbol == ' ' || symbol == '\n' || symbol == '<'
      || symbol == '>' || symbol == '|' || symbol == '\t'
-     || symbol == '&' || symbol == ';' || symbol == ':'
-     || symbol ==   '/') {
+     || symbol == '&' || symbol == ';' || symbol == ':') {
         return true;
      }
 
@@ -80,27 +79,27 @@ bool Parser::command(bool is_from_pipeline) {
     if (is_from_pipeline) {
         if (input_redirection.stream != nullptr) {
             return false;
+        } else {
+            input_redirection.type = PIPELINE;
         }
-    } else {
-        input_redirection.type = PIPELINE;
     }
 
     bool has_pipeline = pipeline();
     if (has_pipeline) {
-        if ( output_redirection.stream != nullptr) {
+        if (output_redirection.stream != nullptr) {
             return false;
+        } else {
+            output_redirection.type = PIPELINE;
         }
-    } else {
-        output_redirection.type = PIPELINE;
     }
 
     // Convert char* to string for Command constructor
-    std::string input_r = (input_redirection.stream == nullptr) ? "" : input_redirection.stream;
-    std::string output_r = (output_redirection.stream == nullptr) ? "" : output_redirection.stream;
+    std::string input_str = (input_redirection.stream == nullptr) ? "" : input_redirection.stream;
+    std::string output_str = (output_redirection.stream == nullptr) ? "" : output_redirection.stream;
 
-    Command *cmd = new Command(id, args, input_r, input_redirection.type,
-                                    output_r, output_redirection.type, is_from_pipeline);
-    commands.push_back(cmd);
+    Command *cmd = new Command(id, args, input_str, input_redirection.type,
+                                    output_str, output_redirection.type, is_from_pipeline);
+    commands.push_front(cmd);
 
     return true;
 }
