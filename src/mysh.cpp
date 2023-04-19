@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <fcntl.h>
+#include <stdio.h>
+#include <signal.h>
 
 #include "common.h"
 #include "command.h"
@@ -11,7 +13,22 @@
 
 using namespace std;
 
+// void ignore_signal(no_)
+
 int main(void) {
+
+    signal(SIGTTIN, SIG_IGN);
+    signal(SIGTTOU, SIG_IGN);
+
+    pid_t shell_pid = getpid();
+
+    setpgid(shell_pid, shell_pid);
+
+    if (tcsetpgrp(STDIN_FILENO, shell_pid) != 0){
+        perror("tcsetpgrp");
+        exit(EXIT_FAILURE);
+    }
+
 
     while (true) {
         cout << "in-mysh-now:>";
@@ -29,20 +46,23 @@ int main(void) {
         }
 
 
+
         list<Command *> commands = my_parser->get_commands();
         list<Command *>::iterator cmd_it;
-        list<pid_t> children_to_wait;
-        pid_t pid;
+        pid_t pid, childern_gpid;
         uint no_cmd;
         int new_fd[2], old_fd[2];   // fd's that hold multiple pipes
-
+        bool is_bg_cmd = commands.back()->is_in_background();
+     
         for (cmd_it = commands.begin(), no_cmd = 0; cmd_it != commands.end(); cmd_it++, no_cmd++) {
+
             if (no_cmd + 1 != commands.size()) {    // If isn't the last command in a pipeline, make a new pipe
                 if (pipe(new_fd) < 0) {
                     perror("pipe");
                     exit(EXIT_FAILURE);
                 }
             }
+            Command *cmd = *cmd_it;
 
             if ((pid = fork()) == -1) {
                 perror("fork");
@@ -50,8 +70,7 @@ int main(void) {
             }
 
             if (pid == 0) {
-                Command *cmd = *cmd_it;
-                
+
                 // Prepare arguments for execvp()
                 // Form : {<program_name>, arg1, arg2, ..., NULL}
                 size_t no_args = cmd->get_args().size();
@@ -135,9 +154,8 @@ int main(void) {
                         perror("close");
                         exit(EXIT_FAILURE);
                     }
-
                 }
-            
+
                 if (execvp(args[0], (char * const *)args) < 0) {
                     perror("execvp");
                     exit(EXIT_FAILURE);
@@ -149,8 +167,26 @@ int main(void) {
                 delete args;
             }
 
-            if (!(*cmd_it)->is_in_background()) {
-                children_to_wait.push_back(pid);
+            if (no_cmd == 0) {
+                childern_gpid = pid;
+
+                if (setpgid(childern_gpid, childern_gpid) < 0) {
+                    perror("setpgid");
+                    exit(EXIT_FAILURE);
+                }
+
+                if (!is_bg_cmd) {
+                    if (tcsetpgrp(STDIN_FILENO, childern_gpid) != 0) {
+                        perror("tcsetpgrp");
+                        exit(EXIT_FAILURE);
+                    }
+                }
+            }
+            else {
+                if (setpgid(pid, childern_gpid) < 0) {
+                    perror("setpgid");
+                    exit(EXIT_FAILURE);
+                }
             }
 
             // We have to close old pipe's ends after the connection
@@ -172,9 +208,19 @@ int main(void) {
             }
         }
 
-        // Wait all children
-        for (list<pid_t>::iterator it = children_to_wait.begin(); it != children_to_wait.end(); it++) {
-            waitpid(pid, nullptr, WUNTRACED);
+        if (is_bg_cmd == false) {
+            int status;
+
+            for (unsigned long i = 0; i < commands.size(); i++ ) {
+                if (waitpid(-childern_gpid, &status, WUNTRACED) == -1) {
+                    perror("waitpid");
+                    exit(EXIT_FAILURE);
+                }
+            }
+            if (tcsetpgrp(STDIN_FILENO, shell_pid) != 0) {
+                perror("waitpid");
+                exit(EXIT_FAILURE);
+            }   
         }
 
         delete my_parser;

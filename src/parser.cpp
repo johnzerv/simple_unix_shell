@@ -40,15 +40,16 @@ bool Parser::is_valid_symbol(char symbol) {
 bool Parser::is_invalid_symbol(char symbol) {
     if (symbol == ' ' || symbol == '\n' || symbol == '<'
      || symbol == '>' || symbol == '|' || symbol == '\t'
-     || symbol == '&' || symbol == ';' || symbol == ':') {
+     || symbol == '&' || symbol == ';' || symbol == ':' || symbol == '\r') {
         return true;
      }
 
     return false;
 }
 
-bool Parser::command(bool is_from_pipeline) {
-    // Skip new lines
+bool Parser::command(bool is_from_pipeline) {    // Skip new lines
+    
+
     while (lookahead == '\n') {
         consume(lookahead);
     }
@@ -71,6 +72,7 @@ bool Parser::command(bool is_from_pipeline) {
     }
 
     std::string id(identifier());
+
     std::list<std::string> args = arguments();
     RedirectionPacket input_redirection = input_file();
     RedirectionPacket output_redirection = output_file();
@@ -179,7 +181,8 @@ bool Parser::pipeline() {
 bool Parser::background() {
     skip_whitespaces();
 
-    if (lookahead != '&') {
+    if (lookahead == '&') {
+        consume('&');
         return true;
     }
 
@@ -192,6 +195,7 @@ char* Parser::identifier() {
 
     // Skip whitespaces
     skip_whitespaces();
+
 
     while (!is_invalid_symbol(lookahead)) {
         id[index++] = lookahead;

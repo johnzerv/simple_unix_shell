@@ -134,5 +134,12 @@ void Command::print() {
     std::cout << "stdout";
   }
 
-  std::cout << std::endl;
+  std::cout << std::endl << "Background : ";
+  if (in_background) {
+    std::cout << "yes" << std::endl;
+  }
+  else {
+    std::cout << "no" << std::endl;
+  }
+
 }

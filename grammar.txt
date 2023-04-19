@@ -1,5 +1,6 @@
-Command <- <identifier> Args InputFile OutputFile Pipeline
+Command <- <identifier> Args InputFile OutputFile Pipeline Background
 Args <- <identifier> Args | ε
 InputFile <- < <identifier> | ε
 Outputfile -> > <identifier> | >> <identifier> | ε
 Pipeline -> '|' Command | ε
+Background -> & | ε
