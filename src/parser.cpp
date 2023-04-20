@@ -1,9 +1,10 @@
-
+#include <iostream>
 #include <cstring>
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
+#include <glob.h>
 
 #include "parser.h"
 
@@ -30,7 +31,8 @@ void Parser::consume(char symbol) {
 }
 
 bool Parser::is_valid_symbol(char symbol) {
-    if ((symbol >= 'A' && symbol <= 'z') || (symbol >= '0' && symbol <= '9')) {
+    if ((symbol >= 'A' && symbol <= 'z') || (symbol >= '0' && symbol <= '9')
+      || symbol == '*' || symbol == '?' || symbol == '.' || symbol == '_') {
         return true;
     }
 
@@ -47,33 +49,62 @@ bool Parser::is_invalid_symbol(char symbol) {
     return false;
 }
 
+bool Parser::is_exit_keyword_given() {
+    char tmp_lookahead = lookahead;
+
+    if (lookahead == 'e') {
+        tmp_lookahead = lookahead;
+        consume('e'); 
+
+        if (lookahead == 'x') {
+            tmp_lookahead = lookahead;
+            consume('x');
+
+            if (lookahead == 'i') {
+                tmp_lookahead = lookahead;
+                consume('i');
+
+                if (lookahead == 't') {
+                    tmp_lookahead = lookahead;
+                    consume('t');
+
+                    return true;
+                }
+                else {
+                    ungetc(lookahead, input_stream);
+                    lookahead = tmp_lookahead;
+                }
+            }
+            else {
+                    ungetc(lookahead, input_stream);
+                    lookahead = tmp_lookahead;
+            }
+        }
+        else {
+            ungetc(lookahead, input_stream);
+            lookahead = tmp_lookahead;
+        }
+    }
+
+    return false;
+}
+
 bool Parser::command(bool is_from_pipeline) {    // Skip new lines
-    
 
     while (lookahead == '\n') {
         consume(lookahead);
     }
 
     // Check if exit has been requested
-    if (lookahead == 'e') {
-        consume('e');
-        if (lookahead == 'x') {
-            consume('x');
-            if (lookahead == 'i') {
-                consume('i');
-                if (lookahead == 't') {
-                    consume('t');
-                    exit_keyword_appeared = true;
-                    return true;
-
-                } else ungetc(lookahead, input_stream);
-            } else ungetc(lookahead, input_stream);
-        } else ungetc(lookahead, input_stream);
+    if (is_exit_keyword_given()) {
+        exit_keyword_appeared = true;
+        return true;
     }
 
     std::string id(identifier());
 
     std::list<std::string> args = arguments();
+
     RedirectionPacket input_redirection = input_file();
     RedirectionPacket output_redirection = output_file();
     
@@ -121,6 +152,30 @@ std::list<std::string> Parser::arguments() {
         std::list<std::string> rest_args = arguments();
 
         args.splice(args.end(), rest_args); // merge two lists without sorting
+    }
+
+    std::list<std::string>::iterator it;
+    for (it = args.begin(); it != args.end(); it++) {
+        std::string current_str = (*it);
+
+        // Handle whild characters with glob function
+        if ((current_str.find('*') != std::string::npos) || (current_str.find('?') != std::string::npos)) {
+
+            glob_t matches;
+
+            glob(current_str.c_str(), GLOB_TILDE, nullptr, &matches);
+
+            for (uint i = 0; i < matches.gl_pathc; i++) {
+                args.insert(it, std::string(matches.gl_pathv[i]));
+            }
+            
+            // Erase the string that has wild character
+            std::list<std::string>::iterator str_to_be_erased_it = it;
+            it++; 
+            args.erase(str_to_be_erased_it);
+
+            globfree(&matches);
+        }
     }
 
     return args;

@@ -29,6 +29,7 @@ class Parser {
 		bool is_valid_symbol(char symbol);
 		bool is_invalid_symbol(char symbol);
 		void skip_whitespaces();
+		bool is_exit_keyword_given();
 
 		// Grammar Rules/Targets
 		bool command(bool is_in_pipeline);	// Returns false if an error occured, else true

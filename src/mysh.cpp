@@ -19,7 +19,7 @@ int main(void) {
 
     signal(SIGTTIN, SIG_IGN);
     signal(SIGTTOU, SIG_IGN);
-
+ 
     pid_t shell_pid = getpid();
 
     setpgid(shell_pid, shell_pid);
