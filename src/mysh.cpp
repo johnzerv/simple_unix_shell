@@ -13,13 +13,20 @@
 
 using namespace std;
 
-// void ignore_signal(no_)
+void ignore_signal(int signo) {
+    struct sigaction act_sigtin, act_sigttou;
+
+    act_sigtin.sa_handler = act_sigttou.sa_handler = SIG_IGN;
+
+    sigaction(SIGTTIN, &act_sigtin, NULL);
+    sigaction(SIGTTOU, &act_sigttou, NULL);    
+}
 
 int main(void) {
 
-    signal(SIGTTIN, SIG_IGN);
-    signal(SIGTTOU, SIG_IGN);
- 
+    ignore_signal(SIGTTIN);
+    ignore_signal(SIGTTOU);
+
     pid_t shell_pid = getpid();
 
     setpgid(shell_pid, shell_pid);
