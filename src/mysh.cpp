@@ -14,18 +14,27 @@
 using namespace std;
 
 void ignore_signal(int signo) {
-    struct sigaction act_sigtin, act_sigttou;
+    struct sigaction act_signal;
 
-    act_sigtin.sa_handler = act_sigttou.sa_handler = SIG_IGN;
+    act_signal.sa_handler = SIG_IGN;
 
-    sigaction(SIGTTIN, &act_sigtin, NULL);
-    sigaction(SIGTTOU, &act_sigttou, NULL);    
+    sigaction(signo, &act_signal, NULL);
+}
+
+void set_signal_to_default(int signo) {
+    struct sigaction act_signal;
+
+    act_signal.sa_handler = SIG_DFL;
+
+    sigaction(signo, &act_signal, NULL);
 }
 
 int main(void) {
 
     ignore_signal(SIGTTIN);
     ignore_signal(SIGTTOU);
+    ignore_signal(SIGINT);
+    ignore_signal(SIGTSTP);
 
     pid_t shell_pid = getpid();
 
@@ -77,6 +86,9 @@ int main(void) {
             }
 
             if (pid == 0) {
+                set_signal_to_default(SIGINT);
+                set_signal_to_default(SIGTSTP);
+
 
                 // Prepare arguments for execvp()
                 // Form : {<program_name>, arg1, arg2, ..., NULL}
