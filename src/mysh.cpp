@@ -45,6 +45,10 @@ int main(void) {
         exit(EXIT_FAILURE);
     }
 
+    list<Command *> *history;
+    uint hist_index = 0;
+
+    map<string, string> aliases;
 
     while (true) {
         cout << "in-mysh-now:>";
@@ -60,7 +64,6 @@ int main(void) {
             delete my_parser;
             break;
         }
-
 
 
         list<Command *> commands = my_parser->get_commands();
@@ -88,7 +91,6 @@ int main(void) {
             if (pid == 0) {
                 set_signal_to_default(SIGINT);
                 set_signal_to_default(SIGTSTP);
-
 
                 // Prepare arguments for execvp()
                 // Form : {<program_name>, arg1, arg2, ..., NULL}

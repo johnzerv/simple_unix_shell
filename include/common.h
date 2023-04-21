@@ -2,6 +2,9 @@
 #define COMMON_H
 
 #include <string>
+#include <list>
+#include <map>
+#include <cassert>
 
 #define READ 0
 #define WRITE 1

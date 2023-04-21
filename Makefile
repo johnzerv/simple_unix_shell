@@ -9,8 +9,9 @@ CC = g++
 # Objects
 OBJ_COMMAND = $(OBJ_DIR)/command.o
 OBJ_PARSER = $(OBJ_DIR)/parser.o
+OBJ_HISTORY = $(OBJ_DIR)/history.o
 OBJ_MYSH = $(OBJ_DIR)/mysh.o
-OBJS = $(OBJ_COMMAND) $(OBJ_PARSER) $(OBJ_MYSH)
+OBJS = $(OBJ_COMMAND) $(OBJ_PARSER) $(OBJ_HISTORY) $(OBJ_MYSH)
 
 # Executables
 EXEC_MYSH = mysh

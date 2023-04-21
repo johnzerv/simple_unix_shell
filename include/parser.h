@@ -1,9 +1,6 @@
 #ifndef PARSER_H
 #define PARSER_H
 
-#include <list>
-#include <string>
-
 #include "common.h"
 #include "command.h"
 

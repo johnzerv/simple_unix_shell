@@ -1,7 +1,6 @@
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
-#include <cassert>
 
 #include "command.h"
 
@@ -141,5 +140,4 @@ void Command::print() {
   else {
     std::cout << "no" << std::endl;
   }
-
 }

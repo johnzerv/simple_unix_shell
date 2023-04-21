@@ -2,7 +2,6 @@
 #define COMMAND_H
 
 #include "common.h"
-#include <list>
 
 class Command {
   private:
