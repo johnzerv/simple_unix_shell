@@ -28,7 +28,7 @@ class Command {
     inline std::list <std::string> get_args() { return args; }
     inline bool is_in_background() { return in_background; }
 
-    void print();
+    void print(std::ostream &stream);
 };
 
 #endif // COMMAND_H

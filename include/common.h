@@ -5,6 +5,8 @@
 #include <list>
 #include <map>
 #include <cassert>
+#include <fstream>
+#include <sstream>
 
 #define READ 0
 #define WRITE 1

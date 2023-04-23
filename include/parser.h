@@ -6,7 +6,7 @@
 
 class Parser {
 	public:
-		Parser(FILE *input_stream);
+		Parser(std::istream *input_stream);
 		~Parser();
 		Command* parse(char *input);
 
@@ -18,7 +18,7 @@ class Parser {
 	private:
 		std::list<Command*> commands;
 		char lookahead;
-		FILE *input_stream;
+		std::istream *input_stream;
 		bool exit_keyword_appeared;
 		
 		// Some helpful routines

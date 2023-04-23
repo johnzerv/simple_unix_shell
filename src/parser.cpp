@@ -1,16 +1,15 @@
-#include <iostream>
 #include <cstring>
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <iostream>
 #include <glob.h>
+#include <fstream>
+#include <iostream>
 
 #include "parser.h"
 
-Parser::Parser(FILE *input_stream) {
+Parser::Parser(std::istream *input_stream) {
     this->input_stream = input_stream;
-    lookahead = fgetc(input_stream);
+    lookahead = input_stream->get();
     exit_keyword_appeared = false;
 }
 
@@ -26,7 +25,7 @@ Parser::~Parser() {
 
 void Parser::consume(char symbol) {
     if (lookahead == symbol) {
-        lookahead = fgetc(input_stream);
+        lookahead = input_stream->get();
     }
 }
 
@@ -71,17 +70,17 @@ bool Parser::is_exit_keyword_given() {
                     return true;
                 }
                 else {
-                    ungetc(lookahead, input_stream);
+                    input_stream->unget();
                     lookahead = tmp_lookahead;
                 }
             }
             else {
-                    ungetc(lookahead, input_stream);
+                    input_stream->unget();
                     lookahead = tmp_lookahead;
             }
         }
         else {
-            ungetc(lookahead, input_stream);
+            input_stream->unget();
             lookahead = tmp_lookahead;
         }
     }

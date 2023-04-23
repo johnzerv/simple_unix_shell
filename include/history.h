@@ -7,6 +7,8 @@
 class History {
     public:
         History(uint size);
+        ~History();
+        
         void add(std::list<Command*> new_command);
         std::list<Command *> get_at(uint cmd_index);
         void print_history();

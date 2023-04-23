@@ -43,7 +43,7 @@ std::list<Command *> History::get_at(uint cmd_index) {
 
     std::list<std::list <Command*>>::iterator it;
 
-    for (int i = 0; i < cmd_index; i++) {
+    for (uint i = 0; i < cmd_index; i++) {
         it++;
     }
 

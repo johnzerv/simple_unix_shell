@@ -3,6 +3,7 @@ TODO List:
 Status : Parsing commands with arguments and redirections.
 
 a) write an auxiliary function called skip_whitespaces: DONE
+b) in order to be the project symmetrical, change all FILE * to streams
 
 
 1) Write structure for executing the commands after parsing them (fork, dup2, exec). : DONE

@@ -97,47 +97,30 @@ Command::~Command() {
 //   strcpy(this->output, output);
 // }
 
-void Command::print() {
-  std::cout << "------- Printing a Command -------" << std::endl;
-  std::cout << "Program Name : " << name << std::endl;
+void Command::print(std::ostream &stream) {
+  stream << name;
 
-  std::cout << "Arguments :";
   if (!args.empty()) {
     for (std::list<std::string>::iterator it = args.begin(); it != args.end(); it++) {
-      std::cout << " " << *it;
+      stream << " " << *it;
     }
   }
-  else {
-    std::cout << "No Arguments";
-  }
 
-  std::cout << std::endl << "Input : ";
   if (input_str != nullptr) {
-    std::cout << input_str;
-  }
-  else if (input_rt == PIPELINE) {
-    std::cout << "pipe-read";
-  }
-  else {
-    std::cout << "stdin";
+    stream << " < " << input_str;
   }
 
-  std::cout << "\nOutput : ";
+  std::string in_bg_str = (in_background) ? "&" : "";
+
   if (output_str != nullptr) {
-    std::cout << ((output_rt == IO) ? "> " : ">> ") << output_str;
+    stream << ((output_rt == IO) ? " > " : " >> ") << output_str;
+
+    stream << in_bg_str << std::endl;
   }
   else if (output_rt == PIPELINE) {
-    std::cout << "pipe-write";
+    stream << " | ";
   }
   else {
-    std::cout << "stdout";
-  }
-
-  std::cout << std::endl << "Background : ";
-  if (in_background) {
-    std::cout << "yes" << std::endl;
-  }
-  else {
-    std::cout << "no" << std::endl;
+    stream << in_bg_str << std::endl;
   }
 }

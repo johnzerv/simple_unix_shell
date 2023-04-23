@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <signal.h>
+#include <ostream>
 
 #include "common.h"
 #include "command.h"
@@ -45,25 +46,35 @@ int main(void) {
         exit(EXIT_FAILURE);
     }
 
-    list<Command *> *history;
-    uint hist_index = 0;
+    list<string> history;
+    bool history_cmd = false;
+    istream *current_stream = &cin;
+    stringstream intermediate_stringstream;
+    // uint hist_index = 0;
 
-    map<string, string> aliases;
+    // map<string, string> aliases;
 
     while (true) {
-        cout << "in-mysh-now:>";
+
+        if (current_stream == &cin) {
+            cout << "in-mysh-now:>";
+        }
+        history_cmd = false;
         
-        Parser *my_parser = new Parser(stdin); 
+        Parser *my_parser = new Parser(current_stream); 
 
         if (!my_parser->parse_command()) {
             perror("syntax error");
             exit(EXIT_FAILURE);
         }
 
+
         if (my_parser->exit_requested()) {
             delete my_parser;
             break;
         }
+
+
 
 
         list<Command *> commands = my_parser->get_commands();
@@ -72,8 +83,48 @@ int main(void) {
         uint no_cmd;
         int new_fd[2], old_fd[2];   // fd's that hold multiple pipes
         bool is_bg_cmd = commands.back()->is_in_background();
+        stringstream hist_stringstream;
      
         for (cmd_it = commands.begin(), no_cmd = 0; cmd_it != commands.end(); cmd_it++, no_cmd++) {
+            Command *cmd = *cmd_it;
+            cmd->print(hist_stringstream);
+
+            if (!strcmp(cmd->get_name(), "hist")) {
+                history_cmd = true;
+
+                list<string> args = cmd->get_args();
+
+                if (args.size() > 1) {
+                    perror("syntax error, hist command mustn't have over 1 argument");
+                    exit(EXIT_FAILURE);
+                }
+                else if (args.size() == 0) {
+                    cout << "--------- History ---------" << endl;;
+
+                    int i = 0;
+                    for (list<string>::iterator it = history.begin(); it != history.end() && i < 20; it++, i++) {
+                        cout << i << ". " << *it;
+                    }
+                    current_stream = &cin;
+                }
+                else {
+                    list<string>::iterator hist_it;
+                    int i = 0, requested = stoi(*(args.begin()));
+
+                    if (requested >= 0 && requested <= 20) {
+                        for (hist_it = history.begin(); hist_it != history.end() && i < requested; hist_it++, i++);
+                        
+                        intermediate_stringstream.str("");
+                        intermediate_stringstream << *hist_it;
+                        current_stream = &intermediate_stringstream;
+                    }
+                    else {
+                        cout << "hist: Wrong argument" << endl;
+                    }
+                }
+
+                break;
+            }
 
             if (no_cmd + 1 != commands.size()) {    // If isn't the last command in a pipeline, make a new pipe
                 if (pipe(new_fd) < 0) {
@@ -81,7 +132,9 @@ int main(void) {
                     exit(EXIT_FAILURE);
                 }
             }
-            Command *cmd = *cmd_it;
+
+            
+
 
             if ((pid = fork()) == -1) {
                 perror("fork");
@@ -229,19 +282,24 @@ int main(void) {
             }
         }
 
-        if (is_bg_cmd == false) {
-            int status;
+        if (!history_cmd) {
+            if (is_bg_cmd == false) {
+                int status;
 
-            for (unsigned long i = 0; i < commands.size(); i++ ) {
-                if (waitpid(-childern_gpid, &status, WUNTRACED) == -1) {
+                for (unsigned long i = 0; i < commands.size(); i++ ) {
+                    if (waitpid(-childern_gpid, &status, WUNTRACED) == -1) {
+                        perror("waitpid");
+                        exit(EXIT_FAILURE);
+                    }
+                }
+                if (tcsetpgrp(STDIN_FILENO, shell_pid) != 0) {
                     perror("waitpid");
                     exit(EXIT_FAILURE);
-                }
+                }   
             }
-            if (tcsetpgrp(STDIN_FILENO, shell_pid) != 0) {
-                perror("waitpid");
-                exit(EXIT_FAILURE);
-            }   
+
+            current_stream = &cin;
+            history.push_front(hist_stringstream.str());
         }
 
         delete my_parser;
