@@ -47,20 +47,21 @@ int main(void) {
     }
 
     list<string> history;
-    bool history_cmd = false;
+    bool history_cmd, alias_cmd;
+
+    map<string, string> aliases;
+
     istream *current_stream = &cin;
     stringstream intermediate_stringstream;
     // uint hist_index = 0;
-
-    // map<string, string> aliases;
 
     while (true) {
 
         if (current_stream == &cin) {
             cout << "in-mysh-now:>";
         }
-        history_cmd = false;
-        
+        history_cmd = alias_cmd = false;
+
         Parser *my_parser = new Parser(current_stream); 
 
         if (!my_parser->parse_command()) {
@@ -74,9 +75,6 @@ int main(void) {
             break;
         }
 
-
-
-
         list<Command *> commands = my_parser->get_commands();
         list<Command *>::iterator cmd_it;
         pid_t pid, childern_gpid;
@@ -88,7 +86,8 @@ int main(void) {
         for (cmd_it = commands.begin(), no_cmd = 0; cmd_it != commands.end(); cmd_it++, no_cmd++) {
             Command *cmd = *cmd_it;
             cmd->print(hist_stringstream);
-
+            
+            // Handle history commands
             if (!strcmp(cmd->get_name(), "hist")) {
                 history_cmd = true;
 
@@ -114,7 +113,6 @@ int main(void) {
                     if (requested >= 0 && requested <= 20) {
                         for (hist_it = history.begin(); hist_it != history.end() && i < requested; hist_it++, i++);
                         
-                        intermediate_stringstream.str("");
                         intermediate_stringstream << *hist_it;
                         current_stream = &intermediate_stringstream;
                     }
@@ -125,6 +123,42 @@ int main(void) {
 
                 break;
             }
+            
+
+
+            // Handle aliase's commands
+            if (!strcmp(cmd->get_name(), "createalias")) {
+                assert(cmd->get_args().size() == 2);
+
+                aliases.erase(cmd->get_args().front());
+                aliases.insert({cmd->get_args().front(), cmd->get_args().back()});
+
+                alias_cmd = true;
+            } 
+            else if (!strcmp(cmd->get_name(), "destroyalias")) {
+                assert(cmd->get_args().size() == 1);
+                aliases.erase(cmd->get_args().front());
+
+                alias_cmd = true;
+            } else {
+                map<string, string>::iterator alias_it = aliases.find(cmd->get_name());
+
+
+                if (alias_it != aliases.end()) {
+                    intermediate_stringstream << alias_it->second;
+                    current_stream = &intermediate_stringstream;
+                    alias_cmd = true;
+                }
+
+                else {
+                    current_stream = &cin;
+                    alias_cmd = false;
+                }
+            }
+            if (alias_cmd) {
+                break;
+            }
+            
 
             if (no_cmd + 1 != commands.size()) {    // If isn't the last command in a pipeline, make a new pipe
                 if (pipe(new_fd) < 0) {
@@ -282,7 +316,7 @@ int main(void) {
             }
         }
 
-        if (!history_cmd) {
+        if (!history_cmd && !alias_cmd) {
             if (is_bg_cmd == false) {
                 int status;
 
@@ -299,7 +333,9 @@ int main(void) {
             }
 
             current_stream = &cin;
-            history.push_front(hist_stringstream.str());
+            if (!history_cmd) {
+                history.push_front(hist_stringstream.str());
+            }
         }
 
         delete my_parser;

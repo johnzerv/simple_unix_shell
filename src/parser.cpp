@@ -31,7 +31,7 @@ void Parser::consume(char symbol) {
 
 bool Parser::is_valid_symbol(char symbol) {
     if ((symbol >= 'A' && symbol <= 'z') || (symbol >= '0' && symbol <= '9')
-      || symbol == '*' || symbol == '?' || symbol == '.' || symbol == '_') {
+      || symbol == '*' || symbol == '?' || symbol == '.' || symbol == '_' || symbol == '\"') {
         return true;
     }
 
@@ -41,7 +41,7 @@ bool Parser::is_valid_symbol(char symbol) {
 bool Parser::is_invalid_symbol(char symbol) {
     if (symbol == ' ' || symbol == '\n' || symbol == '<'
      || symbol == '>' || symbol == '|' || symbol == '\t'
-     || symbol == '&' || symbol == ';' || symbol == ':' || symbol == '\r') {
+     || symbol == '&' || symbol == ';' || symbol == ':' || symbol == '\r' || symbol == -1) {
         return true;
      }
 
@@ -250,11 +250,21 @@ char* Parser::identifier() {
     // Skip whitespaces
     skip_whitespaces();
 
-
-    while (!is_invalid_symbol(lookahead)) {
-        id[index++] = lookahead;
-        consume(lookahead);
+    if (lookahead == '\"') {
+        consume('\"');
+        do {
+            id[index++] = lookahead;
+            consume(lookahead);
+        } while(lookahead != '\"');
+        consume('\"');
     }
+    else {
+        while (!is_invalid_symbol(lookahead)) {
+            id[index++] = lookahead;
+            consume(lookahead);
+        }
+    }
+
     id[index] = '\0';
 
     return id;
