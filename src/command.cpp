@@ -82,21 +82,6 @@ Command::~Command() {
   }
 }
 
-// void Command::set_name(char *name) {
-//   this->name = new char(strlen(name) + 1);
-//   strcpy(this->name, name);
-// }
-
-// void Command::set_input(char *input) {
-//   this->input_str = new char(strlen(input) + 1);
-//   strcpy(this->input, input);
-// }
-
-// void Command::set_output(char *output) {
-//   this->output_str = new char(strlen(output) + 1);
-//   strcpy(this->output, output);
-// }
-
 void Command::print(std::ostream &stream) {
   stream << name;
 

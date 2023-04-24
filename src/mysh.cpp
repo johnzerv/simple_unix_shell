@@ -47,7 +47,7 @@ int main(void) {
     }
 
     list<string> history;
-    bool history_cmd, alias_cmd;
+    bool history_cmd, alias_cmd, cd_cmd;
 
     map<string, string> aliases;
 
@@ -60,7 +60,7 @@ int main(void) {
         if (current_stream == &cin) {
             cout << "in-mysh-now:>";
         }
-        history_cmd = alias_cmd = false;
+        history_cmd = alias_cmd = cd_cmd = false;
 
         Parser *my_parser = new Parser(current_stream); 
 
@@ -154,6 +154,16 @@ int main(void) {
                 }
             }
             if (alias_cmd) {
+                break;
+            }
+
+            // Handle special command 'cd'
+            if (!strcmp(cmd->get_name(), "cd")) {
+                assert(cmd->get_args().size() == 1);
+
+                chdir((const char *)(cmd->get_args().front().c_str()));
+
+                cd_cmd = true;
                 break;
             }
     
@@ -310,7 +320,7 @@ int main(void) {
             }
         }
 
-        if (!history_cmd && !alias_cmd) {
+        if (!history_cmd && !alias_cmd && !cd_cmd) {
             if (is_bg_cmd == false) {
                 int status;
 

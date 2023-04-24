@@ -103,7 +103,9 @@ bool Parser::command(bool is_from_pipeline) {    // Skip new lines
         return true;
     }
 
-    std::string id(identifier());
+    char *tmp_id = identifier();
+    std::string id(tmp_id);
+    delete tmp_id;
 
     std::list<std::string> args = arguments();
 
@@ -132,6 +134,13 @@ bool Parser::command(bool is_from_pipeline) {    // Skip new lines
     std::string input_str = (input_redirection.stream == nullptr) ? "" : input_redirection.stream;
     std::string output_str = (output_redirection.stream == nullptr) ? "" : output_redirection.stream;
 
+    // if (input_redirection.stream != nullptr) {
+    //     delete input_redirection.stream;
+    // }
+    // if (output_redirection.stream != nullptr) {
+    //     delete output_redirection.stream;
+    // }
+
     bool in_background = background();
 
     Command *cmd = new Command(id, args, input_str, input_redirection.type,
@@ -148,7 +157,9 @@ std::list<std::string> Parser::arguments() {
     skip_whitespaces();
 
     if (is_valid_symbol(lookahead)) {
-        std::string id(identifier());
+        char *tmp_id = identifier();
+        std::string id = tmp_id;
+        delete tmp_id;
 
         args.push_front(id);
 
@@ -253,7 +264,7 @@ bool Parser::background() {
 
 // Identifier Rule
 char* Parser::identifier() {
-    char *id = new char[100];
+    char *id = new char[1000], *tmp_id;
     unsigned int index = 0;
     bool is_env_var = false;
 
@@ -284,10 +295,11 @@ char* Parser::identifier() {
     id[index] = '\0';
 
     if (is_env_var) {
-        char *tmp_id = getenv((const char *)(id));
+        tmp_id = getenv((const char *)(id));
 
         delete id;
-        id = tmp_id;
+        id = new char[1000];
+        strcpy(id, tmp_id);
     }
 
     return id;
