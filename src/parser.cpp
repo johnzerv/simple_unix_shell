@@ -1,7 +1,7 @@
-#include <cstring>
 #include <stdio.h>
 #include <stdlib.h>
 #include <glob.h>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 
@@ -31,7 +31,8 @@ void Parser::consume(char symbol) {
 
 bool Parser::is_valid_symbol(char symbol) {
     if ((symbol >= 'A' && symbol <= 'z') || (symbol >= '0' && symbol <= '9')
-      || symbol == '*' || symbol == '?' || symbol == '.' || symbol == '_' || symbol == '\"') {
+      || symbol == '*' || symbol == '?' || symbol == '.' || symbol == '_' 
+      || symbol == '\"'|| symbol == '$') {
         return true;
     }
 
@@ -48,6 +49,7 @@ bool Parser::is_invalid_symbol(char symbol) {
     return false;
 }
 
+// Checks if exit keyword is given
 bool Parser::is_exit_keyword_given() {
     char tmp_lookahead = lookahead;
 
@@ -88,6 +90,7 @@ bool Parser::is_exit_keyword_given() {
     return false;
 }
 
+// Command Rule (Top)
 bool Parser::command(bool is_from_pipeline) {    // Skip new lines
 
     while (lookahead == '\n') {
@@ -138,6 +141,7 @@ bool Parser::command(bool is_from_pipeline) {    // Skip new lines
     return true;
 }
 
+// Arguments Rule
 std::list<std::string> Parser::arguments() {
     std::list<std::string> args = std::list<std::string>();
 
@@ -180,6 +184,7 @@ std::list<std::string> Parser::arguments() {
     return args;
 }
 
+// Input Redirection Rule
 RedirectionPacket Parser::input_file() {
     RedirectionPacket input_redirection;
     input_redirection.stream = nullptr;
@@ -196,6 +201,7 @@ RedirectionPacket Parser::input_file() {
     return input_redirection;
 }
 
+// Output Redirection Rule
 RedirectionPacket Parser::output_file() {
     RedirectionPacket output_redirection;
     output_redirection.stream = nullptr;
@@ -217,6 +223,7 @@ RedirectionPacket Parser::output_file() {
     return output_redirection;
 }
 
+// Pipeline Rule
 bool Parser::pipeline() {
     skip_whitespaces();
 
@@ -232,6 +239,7 @@ bool Parser::pipeline() {
     return true;
 }
 
+// Background Rule
 bool Parser::background() {
     skip_whitespaces();
 
@@ -243,9 +251,11 @@ bool Parser::background() {
     return false;
 }
 
+// Identifier Rule
 char* Parser::identifier() {
     char *id = new char[100];
     unsigned int index = 0;
+    bool is_env_var = false;
 
     // Skip whitespaces
     skip_whitespaces();
@@ -259,13 +269,26 @@ char* Parser::identifier() {
         consume('\"');
     }
     else {
+        if (lookahead == '$') {
+            is_env_var = true;
+            consume('$');
+        } 
+
         while (!is_invalid_symbol(lookahead)) {
             id[index++] = lookahead;
             consume(lookahead);
         }
-    }
 
+
+    }
     id[index] = '\0';
+
+    if (is_env_var) {
+        char *tmp_id = getenv((const char *)(id));
+
+        delete id;
+        id = tmp_id;
+    }
 
     return id;
 }

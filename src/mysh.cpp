@@ -123,8 +123,6 @@ int main(void) {
 
                 break;
             }
-            
-
 
             // Handle aliase's commands
             if (!strcmp(cmd->get_name(), "createalias")) {
@@ -158,17 +156,13 @@ int main(void) {
             if (alias_cmd) {
                 break;
             }
-            
-
+    
             if (no_cmd + 1 != commands.size()) {    // If isn't the last command in a pipeline, make a new pipe
                 if (pipe(new_fd) < 0) {
                     perror("pipe");
                     exit(EXIT_FAILURE);
                 }
             }
-
-            
-
 
             if ((pid = fork()) == -1) {
                 perror("fork");
