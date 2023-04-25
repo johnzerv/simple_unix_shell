@@ -4,41 +4,14 @@
 
 #include "command.h"
 
-Command::Command(std::string name) {
-  this->name = new char(name.length() + 1);
-  if(this->name != nullptr) {
-    strcpy(this->name, name.c_str());
-  }
-  else {
-    // ERROR
-    this->name = NULL;
-  }
-
-  this->input_str = this->output_str = nullptr;
-}
-
-Command::Command(std::string name, std::list<std::string> args) {
-  this->name = new char(name.length() + 1);
-  if(this->name != nullptr) {
-    strcpy(this->name, name.c_str());
-  }
-  else {
-    // ERROR
-    this->name = NULL;
-  }
-
-  this->args = args;
-  this->input_str = this->output_str = nullptr;
-}
-
 Command::Command(std::string name, std::list<std::string> args, std::string input, InputOutputType input_rt,
                  std::string output, InputOutputType output_rt, bool in_background) {
   assert(!name.empty());
-  this->name = new char(name.length() + 1);
+  this->name = new char[name.length() + 1];
   strcpy(this->name, name.c_str());
 
   if (!input.empty()) {
-    this->input_str = new char(input.length() + 1);
+    this->input_str = new char[input.length() + 1];
     strcpy(this->input_str, input.c_str());
     this->input_rt = input_rt;
   }
@@ -52,7 +25,7 @@ Command::Command(std::string name, std::list<std::string> args, std::string inpu
   }
 
   if (!output.empty()) {
-    this->output_str = new char(output.length() + 1);
+    this->output_str = new char[output.length() + 1];
     strcpy(this->output_str, output.c_str());
     this->output_rt = output_rt;
   }

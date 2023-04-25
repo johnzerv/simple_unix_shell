@@ -1,4 +1,5 @@
 #include <iostream>
+#include <ostream>
 #include <cstring>
 #include <sys/types.h>
 #include <unistd.h>
@@ -6,7 +7,6 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <signal.h>
-#include <ostream>
 
 #include "common.h"
 #include "command.h"
@@ -14,6 +14,7 @@
 
 using namespace std;
 
+// Signal handler for ignoring signals
 void ignore_signal(int signo) {
     struct sigaction act_signal;
 
@@ -22,6 +23,7 @@ void ignore_signal(int signo) {
     sigaction(signo, &act_signal, NULL);
 }
 
+// Signal handler for setting signal behavior to default
 void set_signal_to_default(int signo) {
     struct sigaction act_signal;
 
@@ -31,14 +33,14 @@ void set_signal_to_default(int signo) {
 }
 
 int main(void) {
-
-    ignore_signal(SIGTTIN);
-    ignore_signal(SIGTTOU);
+    ignore_signal(SIGTTIN); // for tcsetpgrp
+    ignore_signal(SIGTTOU); // for tcsetpgrp
+    // Only children processes get stopped or suspended
     ignore_signal(SIGINT);
     ignore_signal(SIGTSTP);
 
+    // Create a group process for shell and connect it to the terminal
     pid_t shell_pid = getpid();
-
     setpgid(shell_pid, shell_pid);
 
     if (tcsetpgrp(STDIN_FILENO, shell_pid) != 0){
@@ -47,20 +49,18 @@ int main(void) {
     }
 
     list<string> history;
+    map<string, string> aliases;
     bool history_cmd, alias_cmd, cd_cmd;
 
-    map<string, string> aliases;
-
-    istream *current_stream = &cin;
-    stringstream intermediate_stringstream;
-    // uint hist_index = 0;
+    istream *current_stream = &cin;         // Streaming from which parser gets input
+    stringstream intermediate_stringstream; // Auxiliary stream
 
     while (true) {
 
         if (current_stream == &cin) {
             cout << "in-mysh-now:>";
         }
-        history_cmd = alias_cmd = cd_cmd = false;
+        history_cmd = alias_cmd = cd_cmd = false;   // Initialize bools for history, alias and cd command
 
         Parser *my_parser = new Parser(current_stream); 
 
@@ -69,7 +69,6 @@ int main(void) {
             exit(EXIT_FAILURE);
         }
 
-
         if (my_parser->exit_requested()) {
             delete my_parser;
             break;
@@ -77,11 +76,14 @@ int main(void) {
 
         list<Command *> commands = my_parser->get_commands();
         list<Command *>::iterator cmd_it;
+
         pid_t pid, childern_gpid;
         uint no_cmd;
+
         int new_fd[2], old_fd[2];   // fd's that hold multiple pipes
+
         bool is_bg_cmd = commands.back()->is_in_background();
-        stringstream hist_stringstream;
+        stringstream hist_stringstream; // Auxiliary stream for saving command in history container
      
         for (cmd_it = commands.begin(), no_cmd = 0; cmd_it != commands.end(); cmd_it++, no_cmd++) {
             Command *cmd = *cmd_it;
@@ -94,8 +96,8 @@ int main(void) {
                 list<string> args = cmd->get_args();
 
                 if (args.size() > 1) {
-                    perror("syntax error, hist command mustn't have over 1 argument");
-                    exit(EXIT_FAILURE);
+                    cout << "syntax error, hist command mustn't have over 1 argument" << endl;
+                    break;
                 }
                 else if (args.size() == 0) {
                     cout << "--------- History ---------" << endl;;
@@ -126,21 +128,27 @@ int main(void) {
 
             // Handle aliase's commands
             if (!strcmp(cmd->get_name(), "createalias")) {
-                assert(cmd->get_args().size() == 2);
+                alias_cmd = true;
+
+                if (cmd->get_args().size() != 2) {
+                    cout << "syntax error, createalias must have two arguments" << endl;
+                    break;
+                }
 
                 aliases.erase(cmd->get_args().front());
                 aliases.insert({cmd->get_args().front(), cmd->get_args().back()});
-
-                alias_cmd = true;
             } 
             else if (!strcmp(cmd->get_name(), "destroyalias")) {
-                assert(cmd->get_args().size() == 1);
+                alias_cmd = true;
+
+                if (cmd->get_args().size() != 1) {
+                    cout << "syntax error, destroy alias must have one argument" << endl;
+                    break;
+                }
                 aliases.erase(cmd->get_args().front());
 
-                alias_cmd = true;
             } else {
                 map<string, string>::iterator alias_it = aliases.find(cmd->get_name());
-
 
                 if (alias_it != aliases.end()) {
                     intermediate_stringstream << alias_it->second;
@@ -166,8 +174,9 @@ int main(void) {
                 cd_cmd = true;
                 break;
             }
-    
-            if (no_cmd + 1 != commands.size()) {    // If isn't the last command in a pipeline, make a new pipe
+
+            //  Create a new pipe
+            if (no_cmd + 1 != commands.size()) {    // If isn't the last command in a pipeline
                 if (pipe(new_fd) < 0) {
                     perror("pipe");
                     exit(EXIT_FAILURE);
@@ -180,6 +189,7 @@ int main(void) {
             }
 
             if (pid == 0) {
+                // Children processes mustn't ignore signals SIGINT and SIGTSTP
                 set_signal_to_default(SIGINT);
                 set_signal_to_default(SIGTSTP);
 
@@ -272,36 +282,13 @@ int main(void) {
                     perror("execvp");
                     exit(EXIT_FAILURE);
                 }
-
-                for (size_t i = 0; i < no_args + 1; i++) {
-                    delete args[i];
-                }
-                delete args;
             }
 
-            if (no_cmd == 0) {
-                childern_gpid = pid;
+            // Parent's code -- Two things TODO :
+            // 1) Close pipes and update file descriptors
+            // 2) Work on group id's of children
 
-                if (setpgid(childern_gpid, childern_gpid) < 0) {
-                    perror("setpgid");
-                    exit(EXIT_FAILURE);
-                }
-
-                if (!is_bg_cmd) {
-                    if (tcsetpgrp(STDIN_FILENO, childern_gpid) != 0) {
-                        perror("tcsetpgrp");
-                        exit(EXIT_FAILURE);
-                    }
-                }
-            }
-            else {
-                if (setpgid(pid, childern_gpid) < 0) {
-                    perror("setpgid");
-                    exit(EXIT_FAILURE);
-                }
-            }
-
-            // We have to close old pipe's ends after the connection
+            // Close old pipe's ends from parent process
             if ((no_cmd % 2 == 1 || no_cmd + 1 == commands.size()) && commands.size() > 1) {    
                 if (close(old_fd[WRITE]) < 0) {
                     perror("closewrite-parent");
@@ -318,24 +305,55 @@ int main(void) {
                 old_fd[0] = new_fd[0];
                 old_fd[1] = new_fd[1];
             }
-        }
+            
+            // If this is the first command in a pipeline (or the only one)
+            if (no_cmd == 0) {
+                childern_gpid = pid;
 
+                // Create a group for all children with group id equal to the pid of first child
+                if (setpgid(childern_gpid, childern_gpid) < 0) {
+                    perror("setpgid");
+                    exit(EXIT_FAILURE);
+                }
+
+                // And if the command is foreground, connect the terminal (stdin)
+                if (!is_bg_cmd) {
+                    if (tcsetpgrp(STDIN_FILENO, childern_gpid) != 0) {
+                        perror("tcsetpgrp");
+                        exit(EXIT_FAILURE);
+                    }
+                }
+            }
+            else {
+                // Add child to group process with first child's pid
+                if (setpgid(pid, childern_gpid) < 0) {
+                    perror("setpgid");
+                    exit(EXIT_FAILURE);
+                }
+            }
+        }
+        
+        // If command wasn't about history, change directory and aliases
         if (!history_cmd && !alias_cmd && !cd_cmd) {
-            if (is_bg_cmd == false) {
+            if (is_bg_cmd == false) {   // Only for foreground commands
                 int status;
 
+                // Wait for all children forked
                 for (unsigned long i = 0; i < commands.size(); i++ ) {
                     if (waitpid(-childern_gpid, &status, WUNTRACED) == -1) {
                         perror("waitpid");
                         exit(EXIT_FAILURE);
                     }
                 }
+
+                // Connect back the terminal to shell group process (stdin)
                 if (tcsetpgrp(STDIN_FILENO, shell_pid) != 0) {
                     perror("waitpid");
                     exit(EXIT_FAILURE);
                 }   
             }
-
+            
+            // Reading again from stdin
             current_stream = &cin;
             if (!history_cmd) {
                 history.push_front(hist_stringstream.str());

@@ -11,11 +11,11 @@
 #define READ 0
 #define WRITE 1
 
-typedef enum {IO, ADD, PIPELINE, NO_REDIRECTION} InputOutputType;
+typedef enum {IO, ADD, PIPELINE, NO_REDIRECTION} InputOutputType;   // Redirections, Pipeline, I/O
 
 typedef struct {
     char *stream;
     InputOutputType type;
-} RedirectionPacket;
+} IOPacket;         // Input-Output Packet
 
 #endif // COMMON_H

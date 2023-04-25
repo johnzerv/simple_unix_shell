@@ -23,6 +23,7 @@ Parser::~Parser() {
     }
 }
 
+// Read from input stream
 void Parser::consume(char symbol) {
     if (lookahead == symbol) {
         lookahead = input_stream->get();
@@ -42,7 +43,8 @@ bool Parser::is_valid_symbol(char symbol) {
 bool Parser::is_invalid_symbol(char symbol) {
     if (symbol == ' ' || symbol == '\n' || symbol == '<'
      || symbol == '>' || symbol == '|' || symbol == '\t'
-     || symbol == '&' || symbol == ';' || symbol == ':' || symbol == '\r' || symbol == -1) {
+     || symbol == '&' || symbol == ':' || symbol == '\r' 
+     || symbol == -1  || symbol == ';') {
         return true;
      }
 
@@ -51,7 +53,7 @@ bool Parser::is_invalid_symbol(char symbol) {
 
 // Checks if exit keyword is given
 bool Parser::is_exit_keyword_given() {
-    char tmp_lookahead = lookahead;
+    char tmp_lookahead;
 
     if (lookahead == 'e') {
         tmp_lookahead = lookahead;
@@ -75,24 +77,21 @@ bool Parser::is_exit_keyword_given() {
                     input_stream->unget();
                     lookahead = tmp_lookahead;
                 }
-            }
-            else {
+            } else {
                     input_stream->unget();
                     lookahead = tmp_lookahead;
             }
-        }
-        else {
+        } else {
             input_stream->unget();
             lookahead = tmp_lookahead;
         }
     }
-
     return false;
 }
 
 // Command Rule (Top)
-bool Parser::command(bool is_from_pipeline) {    // Skip new lines
-
+bool Parser::command(bool is_from_pipeline) {
+    // Skip newline characters
     while (lookahead == '\n') {
         consume(lookahead);
     }
@@ -103,49 +102,51 @@ bool Parser::command(bool is_from_pipeline) {    // Skip new lines
         return true;
     }
 
+    // Parse program's name
     char *tmp_id = identifier();
-    std::string id(tmp_id);
+    std::string program_name = tmp_id;
     delete tmp_id;
 
+    // Parse program's arguments
     std::list<std::string> args = arguments();
 
-    RedirectionPacket input_redirection = input_file();
-    RedirectionPacket output_redirection = output_file();
+    // Parse I/O redirections if exist
+    IOPacket input_IOPacket = input_file();
+    IOPacket output_IOPacket = output_file();
     
-    // Pipeline info, TODO: need of better comments
+    // Fix input if is from pipeline
     if (is_from_pipeline) {
-        if (input_redirection.stream != nullptr) {
+        if (input_IOPacket.stream != nullptr) {
             return false;
         } else {
-            input_redirection.type = PIPELINE;
+            input_IOPacket.type = PIPELINE;
         }
     }
 
+    // Parse pipeline character and fix output if lookahead was '|'
     bool has_pipeline = pipeline();
     if (has_pipeline) {
-        if (output_redirection.stream != nullptr) {
+        if (output_IOPacket.stream != nullptr) {
             return false;
         } else {
-            output_redirection.type = PIPELINE;
+            output_IOPacket.type = PIPELINE;
         }
     }
 
-    // Convert char* to string for Command constructor
-    std::string input_str = (input_redirection.stream == nullptr) ? "" : input_redirection.stream;
-    std::string output_str = (output_redirection.stream == nullptr) ? "" : output_redirection.stream;
+    // Convert char* to string for Command class constructor
+    std::string input_str = (input_IOPacket.stream == nullptr) ? "" : input_IOPacket.stream;
+    std::string output_str = (output_IOPacket.stream == nullptr) ? "" : output_IOPacket.stream;
 
-    // if (input_redirection.stream != nullptr) {
-    //     delete input_redirection.stream;
-    // }
-    // if (output_redirection.stream != nullptr) {
-    //     delete output_redirection.stream;
-    // }
-
+    // Parse background character '&' if exists
     bool in_background = background();
 
-    Command *cmd = new Command(id, args, input_str, input_redirection.type,
-                                    output_str, output_redirection.type, in_background);
+    Command *cmd = new Command(program_name, args, input_str, input_IOPacket.type,
+                                    output_str, output_IOPacket.type, in_background);
     commands.push_front(cmd);
+
+    if (lookahead == ';') {
+        consume(';');
+    }
 
     return true;
 }
@@ -168,6 +169,7 @@ std::list<std::string> Parser::arguments() {
         args.splice(args.end(), rest_args); // merge two lists without sorting
     }
 
+    // Check for wild characters
     std::list<std::string>::iterator it;
     for (it = args.begin(); it != args.end(); it++) {
         std::string current_str = (*it);
@@ -196,42 +198,42 @@ std::list<std::string> Parser::arguments() {
 }
 
 // Input Redirection Rule
-RedirectionPacket Parser::input_file() {
-    RedirectionPacket input_redirection;
-    input_redirection.stream = nullptr;
-    input_redirection.type = NO_REDIRECTION;
+IOPacket Parser::input_file() {
+    IOPacket input_IOPacket;
+    input_IOPacket.stream = nullptr;
+    input_IOPacket.type = NO_REDIRECTION;
 
     skip_whitespaces();
 
     if (lookahead == '<') {
         consume('<');
-        input_redirection.stream = identifier();
-        input_redirection.type = IO;
+        input_IOPacket.stream = identifier();
+        input_IOPacket.type = IO;
     }
 
-    return input_redirection;
+    return input_IOPacket;
 }
 
 // Output Redirection Rule
-RedirectionPacket Parser::output_file() {
-    RedirectionPacket output_redirection;
-    output_redirection.stream = nullptr;
-    output_redirection.type = NO_REDIRECTION;
+IOPacket Parser::output_file() {
+    IOPacket output_IOPacket;
+    output_IOPacket.stream = nullptr;
+    output_IOPacket.type = NO_REDIRECTION;
 
     skip_whitespaces();
 
     if (lookahead == '>') {
         consume('>');
-        output_redirection.type = IO;
+        output_IOPacket.type = IO;
 
         if (lookahead == '>') {
             consume('>');
-            output_redirection.type = ADD;
+            output_IOPacket.type = ADD;
         }
-        output_redirection.stream = identifier();
+        output_IOPacket.stream = identifier();
     }
 
-    return output_redirection;
+    return output_IOPacket;
 }
 
 // Pipeline Rule
@@ -245,6 +247,7 @@ bool Parser::pipeline() {
     consume ('|');
     skip_whitespaces();
 
+    // Recursive call for next command in pipeline
     command(true);
 
     return true;
@@ -272,15 +275,15 @@ char* Parser::identifier() {
     skip_whitespaces();
 
     if (lookahead == '\"') {
-        consume('\"');
+        consume('\"');              // Don't store ""
         do {
             id[index++] = lookahead;
             consume(lookahead);
         } while(lookahead != '\"');
-        consume('\"');
+        consume('\"');              // Don't store ""
     }
     else {
-        if (lookahead == '$') {
+        if (lookahead == '$') {     // Enviroment variable found
             is_env_var = true;
             consume('$');
         } 
@@ -294,6 +297,7 @@ char* Parser::identifier() {
     }
     id[index] = '\0';
 
+    // Handling reference to enviroment variable's values
     if (is_env_var) {
         tmp_id = getenv((const char *)(id));
 
@@ -305,6 +309,7 @@ char* Parser::identifier() {
     return id;
 }
 
+// Auxiliary function for consuming spaces and tabs (whitespaces)
 void Parser::skip_whitespaces() {
     while (lookahead == ' ' || lookahead == '\t') {
         consume(lookahead);
