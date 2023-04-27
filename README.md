@@ -38,4 +38,4 @@ By using process groups the handling of signals becomes very easy. We just ignor
 <h3>g) History : </h3>
 To implement a history structure, we use same logic as aliases using list instead of map. In order to print the histroy of last 20 (0-19) commands, we type `hist`. To execute a previous command we type `hist number_of_command`.
 
-Sources
+Sources and Table requested
