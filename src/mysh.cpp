@@ -60,9 +60,6 @@ int main(void) {
         if (current_stream == &cin) {
             cout << "in-mysh-now:>";
         }
-        else {
-            cout << "INPUT FROM MAP ALIASES\n";
-        }
         history_cmd = alias_cmd = cd_cmd = false;   // Initialize bools for history, alias and cd command
 
         Parser *my_parser = new Parser(current_stream); 
@@ -368,7 +365,7 @@ int main(void) {
             }
             current_stream = &cin;
             if (!history_cmd) {
-                history.push_front(hist_stringstream.str());
+                history.push_back(hist_stringstream.str());
             }
         }
 

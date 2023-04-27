@@ -43,8 +43,7 @@ bool Parser::is_valid_symbol(char symbol) {
 bool Parser::is_invalid_symbol(char symbol) {
     if (symbol == ' ' || symbol == '\n' || symbol == '<'
      || symbol == '>' || symbol == '|' || symbol == '\t'
-     || symbol == '&' || symbol == ':' || symbol == '\r' 
-     || symbol == -1  || symbol == ';') {
+     || symbol == '&' || symbol == '\r' || symbol == -1  || symbol == ';') {
         return true;
      }
 
@@ -102,8 +101,6 @@ bool Parser::command(bool is_from_pipeline) {
         return true;
     }
 
-    std::cout << "lookahead before identifier : " << lookahead << std::endl;
-
     // Parse program's name
     char *tmp_id = identifier();
     std::string program_name = tmp_id;
@@ -141,8 +138,6 @@ bool Parser::command(bool is_from_pipeline) {
 
     // Parse background character '&' if exists
     bool in_background = background();
-
-    std::cout << "NAME :: " << program_name << std::endl;
 
     Command *cmd = new Command(program_name, args, input_str, input_IOPacket.type,
                                     output_str, output_IOPacket.type, in_background);
