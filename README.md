@@ -33,7 +33,9 @@ For supporting wild characters we used glob function in parsing level, which is 
 In order to have the feature of aliases we use a map that maps the name of alias with the given command. To create an alias we have to type the command `createalias name_of_alias command` and to destroy it we have to type the command `destroyalias name_of_alias`. When an alias is given to execute the corresponding command, we temporarily change the input stream of the next parser into a intermediate stream that contains the command which is mapped to the alias and we skip all sections until we reach the parsing level.
 
 <h3>f) Handle signals : </h3>
-By using process groups the handling of signals becomes very easy. We just ignore (```ignore_signal``` signal handler) by the shell the signals we want to pass on the commands that shell executes and at each child's code we set the behavior on signals back to default (by using ```set_signal_to_default``` signal handler). Note that backgrounds commands don't get notified by the signals because the terminal (stdin) is connected to shell's process group.
+By using process groups the handling of signals becomes very easy. We just ignore (`ignore_signal` signal handler) by the shell the signals we want to pass on the commands that shell executes and at each child's code we set the behavior on signals back to default (by using `set_signal_to_default` signal handler). Note that backgrounds commands don't get notified by the signals because the terminal (stdin) is connected to shell's process group.
 
 <h3>g) History : </h3>
-To implement a history structure, we use same logic as aliases using list instead of map. In order to print the histroy of last 20 (0-19) commands, we type ```hist```. To execute a previous command we type ```hist number_of_command```.
+To implement a history structure, we use same logic as aliases using list instead of map. In order to print the histroy of last 20 (0-19) commands, we type `hist`. To execute a previous command we type `hist number_of_command`.
+
+Sources
