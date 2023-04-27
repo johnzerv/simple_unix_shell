@@ -53,12 +53,15 @@ int main(void) {
     bool history_cmd, alias_cmd, cd_cmd;
 
     istream *current_stream = &cin;         // Streaming from which parser gets input
-    stringstream intermediate_stringstream; // Auxiliary stream
+    stringstream *intermediate_stringstream = nullptr; // Auxiliary stream
 
     while (true) {
-
+        
         if (current_stream == &cin) {
             cout << "in-mysh-now:>";
+        }
+        else {
+            cout << "INPUT FROM MAP ALIASES\n";
         }
         history_cmd = alias_cmd = cd_cmd = false;   // Initialize bools for history, alias and cd command
 
@@ -68,7 +71,7 @@ int main(void) {
             perror("syntax error");
             exit(EXIT_FAILURE);
         }
-
+        
         if (my_parser->exit_requested()) {
             delete my_parser;
             break;
@@ -115,8 +118,9 @@ int main(void) {
                     if (requested >= 0 && requested <= 20) {
                         for (hist_it = history.begin(); hist_it != history.end() && i < requested; hist_it++, i++);
                         
-                        intermediate_stringstream << *hist_it;
-                        current_stream = &intermediate_stringstream;
+                        intermediate_stringstream = new stringstream;
+                        *intermediate_stringstream << *hist_it;
+                        current_stream = intermediate_stringstream;
                     }
                     else {
                         cout << "hist: Wrong argument" << endl;
@@ -151,12 +155,16 @@ int main(void) {
                 map<string, string>::iterator alias_it = aliases.find(cmd->get_name());
 
                 if (alias_it != aliases.end()) {
-                    intermediate_stringstream << alias_it->second;
-                    current_stream = &intermediate_stringstream;
+                    intermediate_stringstream = new stringstream;
+                    *intermediate_stringstream << alias_it->second;
+                    current_stream = intermediate_stringstream;
                     alias_cmd = true;
                 }
-
                 else {
+                    if (intermediate_stringstream != nullptr) {
+                        delete intermediate_stringstream;
+                        intermediate_stringstream = nullptr;
+                    }
                     current_stream = &cin;
                     alias_cmd = false;
                 }
@@ -354,6 +362,10 @@ int main(void) {
             }
             
             // Reading again from stdin
+            if (intermediate_stringstream != nullptr) {
+                delete intermediate_stringstream;
+                intermediate_stringstream = nullptr;
+            }
             current_stream = &cin;
             if (!history_cmd) {
                 history.push_front(hist_stringstream.str());
@@ -361,6 +373,10 @@ int main(void) {
         }
 
         delete my_parser;
+    }
+
+    if (intermediate_stringstream != nullptr) {
+        delete intermediate_stringstream;
     }
 
     return 0;
