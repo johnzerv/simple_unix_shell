@@ -37,5 +37,8 @@ By using process groups the handling of signals becomes very easy. We just ignor
 ### g) History :
 To implement a history structure, we use same logic as aliases using list instead of map. In order to print the histroy of last 20 (0-19) commands, we type `hist`. To execute a previous command we type `hist number_of_command`.
 
+### Compilation :
+In order to compile and execute mysh, just type `make` inside directory proj1 and for exectuion type `make run` or `./mysh`.
+
 Table Requested :   
 ![alt text](table.png)
