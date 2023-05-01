@@ -174,7 +174,9 @@ int main(void) {
             if (!strcmp(cmd->get_name(), "cd")) {
                 assert(cmd->get_args().size() <= 1);
 
+                // Handle case of no arguments that the target directory is $HOME too
                 string target_dir = (cmd->get_args().size() == 0) ? getenv("HOME") : cmd->get_args().front();
+
                 if (chdir((const char *)target_dir.c_str()) == -1) {
                     perror("cd");
                 }
