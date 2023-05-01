@@ -172,9 +172,12 @@ int main(void) {
 
             // Handle special command 'cd'
             if (!strcmp(cmd->get_name(), "cd")) {
-                assert(cmd->get_args().size() == 1);
+                assert(cmd->get_args().size() <= 1);
 
-                chdir((const char *)(cmd->get_args().front().c_str()));
+                string target_dir = (cmd->get_args().size() == 0) ? getenv("HOME") : cmd->get_args().front();
+                if (chdir((const char *)target_dir.c_str()) == -1) {
+                    perror("cd");
+                }
 
                 cd_cmd = true;
                 break;
