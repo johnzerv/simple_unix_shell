@@ -24,10 +24,31 @@ void ignore_signal(int signo) {
 }
 
 // Signal handler for setting signal behavior to default
-void set_signal_to_default(int signo) {
+void set_signal_handler_to_default(int signo) {
     struct sigaction act_signal;
 
     act_signal.sa_handler = SIG_DFL;
+
+    sigaction(signo, &act_signal, NULL);
+}
+
+// Signal handler for signal SIGCHLD, collect the status of the child which terminated
+void sigchld_handler(int signo) {
+    int status;
+    int pid = waitpid(-1, &status, WNOHANG);
+
+    if (pid == -1) {
+        perror("waitpid");
+        exit(EXIT_FAILURE);
+    }
+
+    cout << "Child with pid : " << pid << " exited with status : " << status << endl;
+}
+
+void set_sigchld_handler(int signo) {
+    struct sigaction act_signal;
+
+    act_signal.sa_handler = sigchld_handler;
 
     sigaction(signo, &act_signal, NULL);
 }
@@ -38,6 +59,10 @@ int main(void) {
     // Only children processes get stopped or suspended
     ignore_signal(SIGINT);
     ignore_signal(SIGTSTP);
+
+    set_sigchld_handler(SIGCHLD);
+
+
 
     // Create a group process for shell and connect it to the terminal
     pid_t shell_pid = getpid();
@@ -200,8 +225,8 @@ int main(void) {
 
             if (pid == 0) {
                 // Children processes mustn't ignore signals SIGINT and SIGTSTP
-                set_signal_to_default(SIGINT);
-                set_signal_to_default(SIGTSTP);
+                set_signal_handler_to_default(SIGINT);
+                set_signal_handler_to_default(SIGTSTP);
 
                 // Prepare arguments for execvp()
                 // Form : {<program_name>, arg1, arg2, ..., NULL}
