@@ -39,6 +39,3 @@ To implement a history structure, we use same logic as aliases using list instea
 
 ### Compilation :
 In order to compile and execute mysh, just type `make` inside directory proj1 and for exectuion type `make run` or `./mysh`.
-
-Table Requested :   
-![alt text](table.png)
